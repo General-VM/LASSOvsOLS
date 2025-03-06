@@ -1,0 +1,22 @@
+---
+title: "LASSO vs OLS"
+author: "Victor Matyiku, Rebecca Ly"
+date: "2025-03-06"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Code
+
+## Generating data
+
+```{r}
+p <- 10
+n <- 100
+
+predictors <- matrix(rnorm(n*p), nrow = n, ncol = p)
+predictors # we can change this to a dataframe
+```
