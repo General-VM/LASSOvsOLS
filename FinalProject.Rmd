@@ -44,16 +44,23 @@ significant_coefs
 
 ```{r}
 if (is.na(significant_coefs["(Intercept)",])) {
-  ols_beta <- 0
+  ols_beta_0 <- 0
   ols_coefs <- significant_coefs
 } else {
-  ols_beta <- significant_coefs["(Intercept)",]
+  ols_beta_0 <- significant_coefs["(Intercept)",]
 }
 
 ols_coefs <- significant_coefs[row.names(significant_coefs) != "(Intercept)", , drop = FALSE]
 ols_coefs
 ```
 
-````{r}
+```{r}
+res <- data.frame(Residuals = observations$Y - ols_beta_0 - predictors[, row.names(ols_coefs)] %*% ols_coefs$Value)
+sq_error <- (norm(as.matrix(res, ncol=1), "e"))^2
+sq_error
+```
 
+```{r}
+q <- length(ols_coefs$Value)
+q
 ```
