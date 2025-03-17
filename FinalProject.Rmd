@@ -19,8 +19,8 @@ library(dplyr)
 p <- 10
 n <- 100
 
-beta_0 <- 0
-coefs <- 1:p
+beta_0 <- rnorm(1)
+coefs <- matrix(rnorm(p), nrow = p, ncol = 1)
 
 predictors <- matrix(rnorm(n*p), nrow = n, ncol = p)
 
@@ -30,6 +30,7 @@ observations <- beta_0 + predictors %*% coefs + errors
 generated_data <- as.data.frame(
   cbind(observations, predictors)
 ) #V1 is Y and the rest are the predictors
+generated_data
 ```
 
 ## OLS
