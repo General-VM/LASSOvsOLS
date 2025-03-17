@@ -28,12 +28,29 @@ observations <- beta_0 + predictors %*% coefs + errors
 generated_data <- as.data.frame(
   cbind(observations, predictors)
 ) #V1 is Y and the rest are the predictors
-generated_data
+head(generated_data)
 ```
 
 ## OLS
 
 ```{r}
 ols_model <- lm(V1 ~ ., generated_data)
-summary(ols_model)
+significant_coefs <- data.frame(Value = summary(ols_model)$coef[summary(ols_model)$coef[,4] <= .05, 4])
+significant_coefs
+```
+
+```{r}
+if (is.na(significant_coefs["(Intercept)",])) {
+  ols_beta <- 0
+  ols_coefs <- significant_coefs
+} else {
+  ols_beta <- significant_coefs["(Intercept)",]
+}
+
+ols_coefs <- significant_coefs[row.names(significant_coefs) != "(Intercept)", , drop = FALSE]
+ols_coefs
+```
+
+````{r}
+
 ```
