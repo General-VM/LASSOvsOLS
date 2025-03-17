@@ -20,21 +20,24 @@ n <- 100
 beta_0 <- rnorm(1)
 coefs <- matrix(rnorm(p), nrow = p, ncol = 1)
 
-predictors <- matrix(rnorm(n*p), nrow = n, ncol = p)
+predictors <- matrix(
+  rnorm(n*p), nrow = n, ncol = p,
+  dimnames = list(rows = 1:n, cols = paste("X", 1:p, sep=""))
+)
 
 errors <- rnorm(100)
-observations <- beta_0 + predictors %*% coefs + errors
+observations <- data.frame(Y = beta_0 + predictors %*% coefs + errors)
 
 generated_data <- as.data.frame(
   cbind(observations, predictors)
-) #V1 is Y and the rest are the predictors
+)
 head(generated_data)
 ```
 
 ## OLS
 
 ```{r}
-ols_model <- lm(V1 ~ ., generated_data)
+ols_model <- lm(Y ~ ., generated_data)
 significant_coefs <- data.frame(Value = summary(ols_model)$coef[summary(ols_model)$coef[,4] <= .05, 4])
 significant_coefs
 ```
