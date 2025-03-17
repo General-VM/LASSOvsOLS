@@ -14,9 +14,26 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Generating data
 
 ```{r}
+library(dplyr)
+
 p <- 10
 n <- 100
 
+beta_0 <- 0
+coefs <- 1:p
+
 predictors <- matrix(rnorm(n*p), nrow = n, ncol = p)
-predictors # we can change this to a dataframe
+
+errors <- rnorm(100)
+observations <- beta_0 + predictors %*% coefs + errors
+
+generated_data <- as.data.frame(
+  cbind(observations, predictors)
+) #V1 is Y and the rest are the predictors
+```
+
+## OLS
+
+```{r}
+
 ```
