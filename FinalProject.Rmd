@@ -35,5 +35,6 @@ generated_data <- as.data.frame(
 ## OLS
 
 ```{r}
-
+ols_model <- lm(V1 ~ ., generated_data)
+summary(ols_model)
 ```
