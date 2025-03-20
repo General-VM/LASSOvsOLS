@@ -9,14 +9,49 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Code
+# P = 10
 
-## Generating data
+## Set up
 
 ```{r}
 p <- 10
 n <- 100
 
-predictors <- matrix(rnorm(n*p), nrow = n, ncol = p)
-predictors # we can change this to a dataframe
+# I chose a random beta to work with, you can change this
+beta <- c(1, 2, 3, 0, 5, 6, 0, 8, 0, 0) 
+beta0 <- matrix(0, nrow=100, ncol=1)
+```
+
+## 100 iterations of LASSO
+```{r}
+q_prime_lasso <- matrix(0, 100, 1) #list of q' for lasso
+
+for (i in 1:100) {
+  #generating data
+  epsilon <- rnorm(n)
+  X <- matrix(rnorm(n*p), nrow = n, ncol = p)
+  Y <- beta0 + X %*% beta + epsilon
+  
+  # LASSO with CV
+  cv.fit <- cv.glmnet(X, Y, nfolds=10, family="gaussian") 
+  
+  # optimal lambda
+  selected_lambda <- cv.fit$lambda.min 
+  
+  # coefficients for LASSO model using selected_lambda
+  lasso_coefs = coef(cv.fit, s="lambda.min") 
+  
+  #predict new coefficients using LASSO & selected_lambda
+  prediction <- predict(cv.fit, type="coefficients", s=selected_lambda)  
+  
+  squared_error <- sum((lasso_coefs-prediction)^2)
+  
+  # finding number of predictors chosen by LASSO
+  q_prime <- length(which(prediction!=0))
+  
+  q_prime_lasso[i] <- q_prime
+}
+
+summary(q_prime_lasso)
+
 ```
