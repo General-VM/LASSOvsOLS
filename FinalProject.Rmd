@@ -43,12 +43,16 @@ head(generated_data)
 ```{r}
 ols <- function(input_data){
   ols_model <- lm(Y ~ ., input_data)
+  
+  # extract only coefficients whose p value <= 0.5
   significant_coefs <- data.frame(Coefficients = summary(ols_model)$coef[summary(ols_model)$coef[,4] <= .05, 4])
   
+  # transpose vector so calculations work properly later
   ols_coefs <- t(significant_coefs)
   significant_predictors <- colnames(ols_coefs)[colnames(ols_coefs) != "(Intercept)"]
   ols_coefs <- ols_coefs[, significant_predictors]
 
+  # check if intercept is significant
   if (is.na(significant_coefs["(Intercept)",])) {
    ols_beta_0 <- 0
  } else {
@@ -56,9 +60,10 @@ ols <- function(input_data){
  }
   
   sig_predictors_matrix <- as.matrix(input_data[, significant_predictors])
-  res <- data.frame(Residuals = input_data$Y - ols_beta_0 - sig_predictors_matrix %*% ols_coefs)
-  
-  output <- list(sq_error = (norm(as.matrix(res, ncol=1), "e"))^2,
+  errors <- input_data$Y - ols_beta_0 - sig_predictors_matrix %*% ols_coefs
+
+  # calculating squared error using euclidean norm
+  output <- list(sq_error = (norm(errors, "e"))^2,
                  q = length(significant_predictors))
   
   return(output)
@@ -86,7 +91,8 @@ lasso <- function(input_data){
   #predict new coefficients using LASSO & optimal lambda
   prediction <- predict(cv.fit, newx = X, s="lambda.min")  
 
-  output <- list(sq_error = (norm(Y-prediction, "e"))^2,
+  # calculating squared error using euclidean norm
+  output <- list(sq_error = (norm(Y-prediction, "e"))^2, 
                  q = length(no_intercept))
 
   return(output)
