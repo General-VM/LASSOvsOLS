@@ -17,7 +17,14 @@ knitr::opts_chunk$set(echo = TRUE)
 generate_data <- function(p, n){
   beta0 <- rnorm(1)
   #beta <- matrix(rnorm(p), nrow = p, ncol = 1)
-  beta <- c(1, 2, 3, 0, 5, 6, 0, 8, 0, 0) 
+  #beta <- c(1, 2, 3, 0, 5, 6, 0, 8, 0, 0) 
+  
+  #getting random beta values using either 0 or 1
+  num_nonzero <- sample(c(0:p), 1)
+  num_zero <- p - num_nonzero
+  unordered_beta <- c( rep(1, num_nonzero), rep(0, num_zero) )
+  ordered_beta <- sample(unordered_beta)
+  beta <- as.matrix(ordered_beta)
   
   predictors <- matrix(
     rnorm(n*p), nrow = n, ncol = p,
@@ -34,8 +41,8 @@ generate_data <- function(p, n){
   return(output)
 }
 
-generated_data <- generate_data(10, 100)
-head(generated_data)
+#generated_data <- generate_data(10, 100)
+#head(generated_data)
 ```
 
 ## OLS
@@ -69,7 +76,7 @@ ols <- function(input_data){
   return(output)
 }
 
-ols(generated_data)
+#ols(generated_data)
 ```
 
 ## LASSO
@@ -98,7 +105,7 @@ lasso <- function(input_data){
   return(output)
 }
 
-lasso(generated_data, 100)
+#lasso(generated_data)
 ```
 
 ## Repetition
@@ -129,16 +136,17 @@ analysis_for <- function(p) {
   return(statistics)
 }
 
-analysis_for(10)
+#analysis_for(10)
 ```
 
 ## P values
 
 ```{r}
-p_values <- c(1, 5, 10, 25, 50)
+p_values <- c(2, 5, 10, 25, 50)
 
 for (p in p_values) {
   # TODO
-  analysis_for(p)
+  print(paste0("Analysis for: p = ", p))
+  print(analysis_for(p))
 }
 ```
