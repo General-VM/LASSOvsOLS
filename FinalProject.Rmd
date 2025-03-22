@@ -79,7 +79,7 @@ lasso <- function(input_data, n){
   #predict new coefficients using LASSO & optimal lambda
   prediction <- predict(cv.fit, newx = X, s="lambda.min")  
 
-  output <- list(sq_error = sum((Y-prediction)^2),
+  output <- list(sq_error = (norm(Y-prediction, "e"))^2,
                  q_prime = length(lasso_coefs))
 
   return(output)
