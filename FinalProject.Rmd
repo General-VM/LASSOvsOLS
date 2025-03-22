@@ -69,7 +69,12 @@ ols_sq_error(significant_coefs, generated_data)
 ```
 
 ```{r}
-q <- length(ols_coefs$Value)
+get_q <- function(significant_coefs) {
+  significant_predictors <- rownames(significant_coefs)[rownames(significant_coefs) != "(Intercept)"]
+  return(length(significant_predictors))
+}
+
+q <- get_q(significant_coefs)
 q
 ```
 
