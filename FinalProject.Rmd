@@ -131,3 +131,14 @@ analysis_for <- function(p) {
 
 analysis_for(10)
 ```
+
+## P values
+
+```{r}
+p_values <- c(1, 5, 10, 25, 50)
+
+for (p in p_values) {
+  # TODO
+  analysis_for(p)
+}
+```
