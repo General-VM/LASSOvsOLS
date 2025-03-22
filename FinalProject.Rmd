@@ -74,13 +74,15 @@ lasso <- function(input_data, n){
   cv.fit <- cv.glmnet(X, Y, nfolds=10, family="gaussian") 
 
   # coefficients for LASSO model using optimal lambda
-  lasso_coefs = coef(cv.fit, s="lambda.min") 
+  lasso_coefs <- coef(cv.fit, s="lambda.min")
+  
+  no_intercept <- lasso_coefs@i[lasso_coefs@i != 0]
 
   #predict new coefficients using LASSO & optimal lambda
   prediction <- predict(cv.fit, newx = X, s="lambda.min")  
 
   output <- list(sq_error = (norm(Y-prediction, "e"))^2,
-                 q_prime = length(lasso_coefs))
+                 q_prime = length(no_intercept))
 
   return(output)
 }
