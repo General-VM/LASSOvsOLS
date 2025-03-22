@@ -164,7 +164,15 @@ for (p in p_values) {
   summary_matrix[current_row, 3] <- ols_mse
   
   current_row <- current_row+1
+  
+  print(paste0("Summary Statistics for p = ", p))
+  writeLines("\nOLS Statistics\n")
+  print(summary(statistics$ols_q))
+  writeLines("\nLASSO Statistics\n")
+  print(summary(statistics$lasso_q))
+  writeLines("\n")
 }
 
+writeLines("Summary matrix of LASSO and OLS MSE\n")
 print(summary_matrix)
 ```
