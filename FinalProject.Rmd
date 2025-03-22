@@ -72,20 +72,16 @@ lasso <- function(input_data, n){
   
   # LASSO with CV
   cv.fit <- cv.glmnet(X, Y, nfolds=10, family="gaussian") 
-  
-  # optimal lambda
-  selected_lambda <- cv.fit$lambda.min 
-  
-  # coefficients for LASSO model using selected_lambda
+
+  # coefficients for LASSO model using optimal lambda
   lasso_coefs = coef(cv.fit, s="lambda.min") 
-  
-  #predict new coefficients using LASSO & selected_lambda
-  prediction <- predict(cv.fit, type="coefficients", s=selected_lambda)  
-  
-  
-  output <- list(sq_error = sum((lasso_coefs-prediction)^2),
-                 q_prime = length(which(prediction!=0)))
-  
+
+  #predict new coefficients using LASSO & optimal lambda
+  prediction <- predict(cv.fit, newx = X, s="lambda.min")  
+
+  output <- list(sq_error = sum((Y-prediction)^2),
+                 q_prime = length(lasso_coefs))
+
   return(output)
 }
 
