@@ -58,16 +58,15 @@ ols <- function(input_data){
   
   return(output)
 }
+
+ols(generated_data)
 ```
 
 ## LASSO
 
 ```{r}
 library(glmnet)
-lasso <- function(input_data, n){
-  X <- as.matrix(input_data[colnames(input_data) != "Y"], nrow = n)
-  Y <- as.matrix(input_data$Y, nrow = n)
-    
+lasso <- function(X, Y){
   # LASSO with CV
   cv.fit <- cv.glmnet(X, Y, nfolds=10, family="gaussian") 
   
@@ -87,5 +86,8 @@ lasso <- function(input_data, n){
   return(output)
 }
 
-lasso(generated_data, 100)
+X <- as.matrix(generated_data[colnames(generated_data) != "Y"], nrow = 100)
+Y <- as.matrix(generated_data$Y, nrow = 100)
+
+lasso(X, Y)
 ```
