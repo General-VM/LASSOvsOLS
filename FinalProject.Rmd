@@ -84,19 +84,22 @@ q
 library(glmnet)
 q_prime_lasso <- matrix(0, 100, 1) #list of q' for lasso
 
-#generating data
-X <- predictors
-Y <- as.matrix(observations, nrow = n)
-
-# LASSO with CV
-cv.fit <- cv.glmnet(X, Y, nfolds=10, family="gaussian") 
-
-# optimal lambda
-selected_lambda <- cv.fit$lambda.min 
-
-# coefficients for LASSO model using selected_lambda
-lasso_coefs = coef(cv.fit, s="lambda.min") 
-
+get_lasso_sig_coefs <- function(input_data){
+  #get data
+  X <- as.matrix(input_data[colnames(input_data) != "Y"], nrow = n)
+  Y <- as.matrix(input_data$Y, nrow = n)
+  
+  # LASSO with CV
+  cv.fit <- cv.glmnet(X, Y, nfolds=10, family="gaussian") 
+  
+  # optimal lambda
+  selected_lambda <- cv.fit$lambda.min 
+  
+  # coefficients for LASSO model using selected_lambda
+  lasso_coefs = coef(cv.fit, s="lambda.min")
+  
+  return(lasso_coefs)
+}
 #predict new coefficients using LASSO & selected_lambda
 prediction <- predict(cv.fit, type="coefficients", s=selected_lambda)  
 
