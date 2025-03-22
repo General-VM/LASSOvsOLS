@@ -9,7 +9,7 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# P = 10
+# Code
 
 ## Generating Data
 
@@ -66,9 +66,9 @@ ols(generated_data)
 
 ```{r}
 library(glmnet)
-lasso <- function(input_data, n){
-  X <- as.matrix(input_data[colnames(input_data) != "Y"], nrow = n)
-  Y <- as.matrix(input_data$Y, nrow = n)
+lasso <- function(input_data){
+  X <- as.matrix(input_data[colnames(input_data) != "Y"])
+  Y <- as.matrix(input_data$Y)
   
   # LASSO with CV
   cv.fit <- cv.glmnet(X, Y, nfolds=10, family="gaussian") 
@@ -82,10 +82,41 @@ lasso <- function(input_data, n){
   prediction <- predict(cv.fit, newx = X, s="lambda.min")  
 
   output <- list(sq_error = (norm(Y-prediction, "e"))^2,
-                 q_prime = length(no_intercept))
+                 q = length(no_intercept))
 
   return(output)
 }
 
 lasso(generated_data, 100)
+```
+
+## Repetition
+
+```{r}
+analysis_for <- function(p) {
+  statistics <- list(
+    ols_err <- 1:100,
+    lasso_err <- 1:100,
+    ols_q <- 1:100,
+    lasso_q <- 1:100
+  )
+  
+  for (i in 1:100) {
+    generated_data <- generate_data(p, 100)
+    ols_stats <- ols(generated_data)
+    lasso_stats <- lasso(generated_data)
+    
+    statistics$ols_err[i] <- ols_stats$sq_error
+    statistics$lasso_err[i] <- lasso_stats$sq_error
+    statistics$ols_q[i] <- ols_stats$q
+    statistics$lasso_q[i] <- lasso_stats$q
+  }
+  
+  statistics$ols_mse <- sum(statistics$ols_err)/100
+  statistics$lasso_mse <- sum(statistics$lasso_err)/100
+  
+  return(statistics)
+}
+
+analysis_for(10)
 ```
