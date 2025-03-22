@@ -100,10 +100,10 @@ lasso(generated_data, 100)
 ```{r}
 analysis_for <- function(p) {
   statistics <- list(
-    ols_err <- 1:100,
-    lasso_err <- 1:100,
-    ols_q <- 1:100,
-    lasso_q <- 1:100
+    ols_err = 1:100,
+    lasso_err = 1:100,
+    ols_q = 1:100,
+    lasso_q = 1:100
   )
   
   for (i in 1:100) {
