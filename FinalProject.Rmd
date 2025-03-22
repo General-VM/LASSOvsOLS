@@ -18,7 +18,7 @@ p <- 10
 n <- 100
 
 beta0 <- rnorm(1)
-#coefs <- matrix(rnorm(p), nrow = p, ncol = 1)
+#beta <- matrix(rnorm(p), nrow = p, ncol = 1)
 beta <- c(1, 2, 3, 0, 5, 6, 0, 8, 0, 0) 
 
 predictors <- matrix(
@@ -74,7 +74,7 @@ q_prime_lasso <- matrix(0, 100, 1) #list of q' for lasso
 
 #generating data
 X <- predictors
-Y <- observations
+Y <- as.matrix(observations, nrow = n)
 
 # LASSO with CV
 cv.fit <- cv.glmnet(X, Y, nfolds=10, family="gaussian") 
