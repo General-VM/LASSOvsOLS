@@ -9,24 +9,25 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Code
+# P = 10
 
-## Generating data
+## Set up
 
 ```{r}
 p <- 10
 n <- 100
 
-beta_0 <- rnorm(1)
-coefs <- matrix(rnorm(p), nrow = p, ncol = 1)
+beta0 <- rnorm(1)
+#coefs <- matrix(rnorm(p), nrow = p, ncol = 1)
+beta <- c(1, 2, 3, 0, 5, 6, 0, 8, 0, 0) 
 
 predictors <- matrix(
   rnorm(n*p), nrow = n, ncol = p,
   dimnames = list(rows = 1:n, cols = paste("X", 1:p, sep=""))
 )
 
-errors <- rnorm(100)
-observations <- data.frame(Y = beta_0 + predictors %*% coefs + errors)
+errors <- rnorm(n)
+observations <- data.frame(Y = beta0 + predictors %*% beta + errors)
 
 generated_data <- as.data.frame(
   cbind(observations, predictors)
@@ -63,4 +64,36 @@ sq_error
 ```{r}
 q <- length(ols_coefs$Value)
 q
+```
+
+## LASSO
+
+```{r}
+library(glmnet)
+q_prime_lasso <- matrix(0, 100, 1) #list of q' for lasso
+
+#generating data
+X <- predictors
+Y <- observations
+
+# LASSO with CV
+cv.fit <- cv.glmnet(X, Y, nfolds=10, family="gaussian") 
+
+# optimal lambda
+selected_lambda <- cv.fit$lambda.min 
+
+# coefficients for LASSO model using selected_lambda
+lasso_coefs = coef(cv.fit, s="lambda.min") 
+
+#predict new coefficients using LASSO & selected_lambda
+prediction <- predict(cv.fit, type="coefficients", s=selected_lambda)  
+
+squared_error <- sum((lasso_coefs-prediction)^2)
+
+# finding number of predictors chosen by LASSO
+q_prime <- length(which(prediction!=0))
+
+q_prime_lasso[i] <- q_prime
+
+summary(q_prime_lasso)
 ```
