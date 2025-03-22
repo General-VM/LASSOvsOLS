@@ -11,27 +11,30 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # P = 10
 
-## Set up
+## Generating Data
 
 ```{r}
-p <- 10
-n <- 100
+generate_data <- function(p, n){
+  beta0 <- rnorm(1)
+  #beta <- matrix(rnorm(p), nrow = p, ncol = 1)
+  beta <- c(1, 2, 3, 0, 5, 6, 0, 8, 0, 0) 
+  
+  predictors <- matrix(
+    rnorm(n*p), nrow = n, ncol = p,
+    dimnames = list(rows = 1:n, cols = paste("X", 1:p, sep=""))
+  )
+  
+  errors <- rnorm(n)
+  observations <- data.frame(Y = beta0 + predictors %*% beta + errors)
+  
+  output <- as.data.frame(
+    cbind(observations, predictors)
+  )
+  
+  return(output)
+}
 
-beta0 <- rnorm(1)
-#beta <- matrix(rnorm(p), nrow = p, ncol = 1)
-beta <- c(1, 2, 3, 0, 5, 6, 0, 8, 0, 0) 
-
-predictors <- matrix(
-  rnorm(n*p), nrow = n, ncol = p,
-  dimnames = list(rows = 1:n, cols = paste("X", 1:p, sep=""))
-)
-
-errors <- rnorm(n)
-observations <- data.frame(Y = beta0 + predictors %*% beta + errors)
-
-generated_data <- as.data.frame(
-  cbind(observations, predictors)
-)
+generated_data <- generate_data(10, 100)
 head(generated_data)
 ```
 
