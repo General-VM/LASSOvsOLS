@@ -41,19 +41,10 @@ head(generated_data)
 ## OLS
 
 ```{r}
-get_ols_sig_coefs <- function(input_data){
+ols <- function(input_data){
   ols_model <- lm(Y ~ ., input_data)
   significant_coefs <- data.frame(Coefficients = summary(ols_model)$coef[summary(ols_model)$coef[,4] <= .05, 4])
   
-  return(significant_coefs)
-}
-
-significant_coefs <- get_ols_sig_coefs(generated_data)
-significant_coefs
-```
-
-```{r}
-ols_sq_error <- function(significant_coefs, input_data) {
   ols_coefs <- t(significant_coefs)
   significant_predictors <- colnames(ols_coefs)[colnames(ols_coefs) != "(Intercept)"]
   ols_beta_0 <- ols_coefs[, "(Intercept)"]
@@ -61,21 +52,12 @@ ols_sq_error <- function(significant_coefs, input_data) {
   
   sig_predictors_matrix <- as.matrix(input_data[, significant_predictors])
   res <- data.frame(Residuals = input_data$Y - ols_beta_0 - sig_predictors_matrix %*% ols_coefs)
-  sq_error <- (norm(as.matrix(res, ncol=1), "e"))^2
-  return(sq_error)
+  
+  output <- list(sq_error = (norm(as.matrix(res, ncol=1), "e"))^2,
+                 q = length(significant_predictors))
+  
+  return(output)
 }
-
-ols_sq_error(significant_coefs, generated_data)
-```
-
-```{r}
-get_q <- function(significant_coefs) {
-  significant_predictors <- rownames(significant_coefs)[rownames(significant_coefs) != "(Intercept)"]
-  return(length(significant_predictors))
-}
-
-q <- get_q(significant_coefs)
-q
 ```
 
 ## LASSO
@@ -100,7 +82,7 @@ lasso <- function(input_data, n){
   
   
   output <- list(sq_error = sum((lasso_coefs-prediction)^2),
-                     q_prime = length(which(prediction!=0)))
+                 q_prime = length(which(prediction!=0)))
   
   return(output)
 }
