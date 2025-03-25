@@ -16,15 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 generate_data <- function(p, n){
   beta0 <- rnorm(1)
-  #beta <- matrix(rnorm(p), nrow = p, ncol = 1)
-  #beta <- c(1, 2, 3, 0, 5, 6, 0, 8, 0, 0) 
-  
-  #getting random beta values using either 0 or 1
-  num_nonzero <- sample(c(0:p), 1)
-  num_zero <- p - num_nonzero
-  unordered_beta <- c( rep(1, num_nonzero), rep(0, num_zero) )
-  ordered_beta <- sample(unordered_beta)
-  beta <- as.matrix(ordered_beta)
+  beta <- matrix(rnorm(p), nrow = p, ncol = 1)
   
   predictors <- matrix(
     rnorm(n*p), nrow = n, ncol = p,
