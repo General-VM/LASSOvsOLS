@@ -20,29 +20,33 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## 1.1 Background of OLS and LASSO Method
 
-**OLS** (Ordinary Least Squares) and **LASSO** (Least Absolute Selection and Shrinkage Operator) are both methods that can be used to estimate regression coefficients for a line of best fit on data. These coefficients are typically represented by $\beta$, a p-dimensional vector where p is the number of predictors.
+**OLS** (Ordinary Least Squares) and **LASSO** (Least Absolute Selection and Shrinkage Operator) are both methods that can be used to estimate regression coefficients for a line of best fit on data. These coefficients are typically represented by $\beta$, a $p$-dimensional vector where $p$ is the number of predictors.
 
-The objective of the OLS method is to find a line of best fit that minimizes the sum of squared residuals, which are the differences between the predicted and actual data. This method is effective when the sample size (n) of the chosen dataset is greater than the number of predictors (p), i.e n \> p. Otherwise the method is undefined. The OLS estimator derived from the method can be written as follows:
+The objective of the OLS method is to find a line of best fit that minimizes the sum of squared residuals, which are the differences between the predicted and actual data. This method is effective when the sample size ($n$) of the chosen dataset is greater than the number of predictors ($p$), i.e $n > p$. Otherwise the method is undefined. The OLS estimator derived from the method can be written as follows:
 
-$$\hat\beta_{OLS}=argmin_\beta \frac{1}{2n} \|Y-X\beta\|^2_{2}$$ where - Y = $(Y_1, ..., Y_n)^T$ is n x 1 response vector - X = $(X_1, ..., X_n)^T$ is n x p design matrix of covariates - $\beta$ = $(Y_1, ..., Y_n)^T$ is p-dimensional regression coefficient vector
+$$\hat\beta_{OLS}=argmin_\beta \frac{1}{2n} \|Y-X\beta\|^2_{2}$$ where
 
-For p\>n, the LASSO method is more favourable. The LASSO method uses L1 regularization where a penalty is added to the structure of the OLS method. The penalty achieves sparsity: an effect where the coefficients of some features are reduced close to, or exactly to zero, resulting in only certain features being selected in the final model. In other words, predictors with the least predictive power are dropped from the model and the remaining are seen as the most significant predictors. The estimator is typically written in Lagrangian form as follows:
+-   $Y = (Y_1, ..., Y_n)^T$ is a $n \times 1$ response vector
 
-$$\hat\beta_{LASSO} = argmin_{\beta} \{ L(\beta)+\lambda\|\beta\|_1\}$$ $$\hat\beta_{LASSO} = argmin_\beta \{ \frac{1}{2n} \sum_{i=1}^{n}(Y_i-\sum_{j=1}^{p}X_{ij}\beta_j)^2+\lambda\sum_{j=1}^{p}|\beta_j|\}=argmin_{\beta}F(\beta)$$
+-   $X = (X_1, ..., X_n)^T$ is a $n \times p$ design matrix of covariates
+
+-   $\beta$ = $(Y_1, ..., Y_n)^T$ is a $p$-dimensional regression coefficient vector
+
+For $p>n$, the LASSO method is more favourable. The LASSO method uses L1 regularization where a penalty is added to the structure of the OLS method. The penalty achieves sparsity: an effect where the coefficients of some features are reduced close to, or exactly to zero, resulting in only certain features being selected in the final model. In other words, predictors with the least predictive power are dropped from the model and the remaining are seen as the most significant predictors. The estimator is typically written in Lagrangian form as follows: $$\hat\beta_{LASSO} = argmin_{\beta} \{ L(\beta)+\lambda\|\beta\|_1\}$$ $$\hat\beta_{LASSO} = argmin_\beta \{ \frac{1}{2n} \sum_{i=1}^{n}(Y_i-\sum_{j=1}^{p}X_{ij}\beta_j)^2+\lambda\sum_{j=1}^{p}|\beta_j|\}=argmin_{\beta}F(\beta)$$
 
 One way of tuning the parameter lambda from a set of candidates is through *Cross-Validation (CV)*. The candidate that produces the LASSO estimator that minimizes the loss function is selected to be the most optimal lambda. A detailed procedure of the CV method is listed below:
 
 1.  Divide the data set *n* into *m* disjoint set $D_1, ..., D_m$ of size *n/m* each.
 
-2.  For each $\lambda\in\Lambda$, evaluate $\hat\beta^{-(h)}_{LASSO}(\lambda)$. the LASSO estimator based on the dataset $D\D_h$, h=1, ..., *m*. Each $D_h$ is treated as a *test dataset*, while $D\D_h$ as a *training dataset*.
+2.  For each $\lambda\in\Lambda$, evaluate $\hat\beta^{-(h)}_{LASSO}(\lambda)$. the LASSO estimator based on the dataset $D\D_h$, $h=1, ..., m$. Each $D_h$ is treated as a *test dataset*, while $D\D_h$ as a *training dataset*.
 
-3.  Thus, for each $\lambda\in\Lambda$ we get *h* LASSO estimators, making in total *h x q* LASSO estimators.
+3.  Thus, for each $\lambda\in\Lambda$ we get $h$ LASSO estimators, making in total $h \times q$ LASSO estimators.
 
-4.  Define the loss function
+4.  Define the loss function $$CV(\lambda)=\sum_{h=1}^{m}\sum_{i:(X_i,Y_i)\in D_h}(Y_i-X_i^T\hat\beta^{-(h)}_{LASSO}(\lambda))^2$$
 
-$$CV(\lambda)=\sum_{h=1}^{m}\sum_{i:(X_i,Y_i)\in D_h}(Y_i-X_i^T\hat\beta^{-(h)}_{LASSO}(\lambda))^2$$ 5. Choose $\lambda$ that minimized the loss function.
+5.  Choose $\lambda$ that minimized the loss function.
 
-It can be seen that the OLS estimator can be derived from the LASSO estimator as t-\>$\infty$. It should also be noted that while LASSO can set coefficients to zero, there is the risk of over-shrinkage.
+It can be seen that the OLS estimator can be derived from the LASSO estimator as $t \rightarrow \infty$. It should also be noted that while LASSO can set coefficients to zero, there is the risk of over-shrinkage.
 
 ## 1.2 Hypothesis Statement
 
@@ -50,31 +54,41 @@ It can be seen that the OLS estimator can be derived from the LASSO estimator as
 
 ## 1.3 Goals
 
-1.  Write a function for OLS using lm()
+1.  Write a function for OLS using `lm()`
 
-2.  Write a function for LASSO using lambda chosen from cross-validation
+2.  Write a function for LASSO using $\lambda$ chosen from cross-validation
 
-3.  Successfully implement one hundred iterations of both functions for each chosen value of p (500 iterations total)
+3.  Successfully implement one hundred iterations of both functions for each chosen value of $p$ (500 iterations total)
 
-4.  Summarize the number of chosen predictors for each p and record the mean squared value
+4.  Summarize the number of chosen predictors for each $p$ and record the mean squared value
 
 # 2. Data source and Design
 
 ## 2.1 Data Source
 
-The program, designed in R, used five values of p = {2, 5, 10, 15, 25}. Each iteration on p created a randomly generated, p-dimensional dataset based on the following linear model:
+The program, designed in R, used five values of $p = \{2, 5, 10, 15, 25\}$. Each iteration on p created a randomly generated, p-dimensional dataset based on the following linear model:
 
-$$Y=\beta_0+X\beta+\epsilon$$ where - Y = $(Y_1, ..., Y_n)^T$ is n x 1 response vector - X = $(X_1, ..., X_n)^T$ is n x p design matrix of covariates - $\beta$ = $(Y_1, ..., Y_n)^T$ is p-dimensional regression coefficient vector - $\beta_0$ is the intercept - $\epsilon$ is the n-dimensional noise vector
+$$Y=\beta_0+X\beta+\epsilon$$ where
+
+-   $Y =(Y_1, ..., Y_n)^T$ is a $n \times 1$ response vector
+
+-   $X = (X_1, ..., X_n)^T$ is a $n \times p$ design matrix of covariates
+
+-   $\beta$ = $(Y_1, ..., Y_n)^T$ is a $p$-dimensional regression coefficient vector
+
+-   $\beta_0$ is the intercept
+
+-   $\epsilon$ is the $n$-dimensional noise vector
 
 No other manipulation was performed on the dataset.
 
-A total of 3 functions were written for this project: *Generate_data()*, *ols()* and *lasso()*. Generate_data initially creates the normally distributed data set X using the number of predictors (p) and number of observations (n).
+A total of 3 functions were written for this project: `generate_data()`, `ols()`, and `lasso()`. `generate_data()` initially creates the normally distributed data set $X$ using the number of predictors ($p$) and number of observations (\$n\$).
 
-## 2.2 Design of OLS Method
+## 2.2 Design of OLS Function
 
 -   describe functions [?]
 
-## 2.3 Design of LASSO Method
+## 2.3 Design of LASSO Function
 
 -   describe functons [?]
 
