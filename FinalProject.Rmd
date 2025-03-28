@@ -146,8 +146,8 @@ lasso <- function(input_data){
 variable_selection_stats <- function(selected_predictors, true_predictors, p) {
   true_positives <- 0
   false_positives <- 0
-  false_negative <- 0
-  true_negative <- 0
+  false_negatives <- 0
+  true_negatives <- 0
   for (i in 1:p) {
     if (selected_predictors[i]){
       if (true_predictors[i]) {
@@ -157,9 +157,9 @@ variable_selection_stats <- function(selected_predictors, true_predictors, p) {
       }
     } else {
       if (true_predictors[i]) {
-        false_negative = false_negative + 1
+        false_negatives = false_negatives + 1
       } else {
-        true_negative = true_negative + 1
+        true_negatives = true_negatives + 1
       }
     }
   }
@@ -173,21 +173,25 @@ variable_selection_stats <- function(selected_predictors, true_predictors, p) {
   
   return(output)
 }
+#p <- 5
+#true <- c(TRUE, FALSE, FALSE, TRUE, FALSE)
+#selected <- c(FALSE, TRUE, FALSE, TRUE, FALSE)
+#variable_selection_stats(true, selected, p)
 ```
 
 ## Repetition
 
 ```{r}
 analysis_for <- function(p) {
-  statistics <- list()
+  statistics <- list(ols = list(), lasso = list())
   
   for (i in 1:100) {
     output_list <- generate_data(p, 100)
     generated_data <- output_list$df
     
     ols_stats <- ols(generated_data)
-    statistics$ols_err[i] <- ols_stats$sq_error
-    statistics$ols_q[i] <- ols_stats$q
+    statistics$ols$err[i] <- ols_stats$sq_error
+    statistics$ols$q[i] <- ols_stats$q
 
     var_select_stats <- variable_selection_stats(
       ols_stats$selected_betas,
@@ -195,30 +199,64 @@ analysis_for <- function(p) {
       p
     )
     # True Positive Rate (how many predictors did it correctly classify as relevant)
-    statistics$ols_tpr[i] <- var_select_stats$tp / (var_select_stats$tp + var_select_stats$fn)
+    statistics$ols$tpr[i] <- var_select_stats$tp / (var_select_stats$tp + var_select_stats$fn)
     # False Positive Rate (how many predictors did it incorrectly classify as relevant)
-    statistics$ols_fpr[i] <- var_select_stats$fp / (var_select_stats$fp + var_select_stats$tn)
+    statistics$ols$fpr[i] <- var_select_stats$fp / (var_select_stats$fp + var_select_stats$tn)
     # Precision (how correctly did it classify predictors as relevant)
-    statistics$ols_precision[i] <- var_select_stats$tp / (var_select_stats$tp + var_select_stats$fp)
+    statistics$ols$precision[i] <- var_select_stats$tp / (var_select_stats$tp + var_select_stats$fp)
+    # Accuracy (how correctly did it classify predictors in general)
+    trues <- var_select_stats$tp + var_select_stats$tn
+    statistics$ols$accuracy[i] <- trues / (var_select_stats$tp + var_select_stats$fp + trues)
   
     lasso_stats <- lasso(generated_data)
-    statistics$lasso_err[i] <- lasso_stats$sq_error
-    statistics$lasso_q[i] <- lasso_stats$q
+    statistics$lasso$err[i] <- lasso_stats$sq_error
+    statistics$lasso$q[i] <- lasso_stats$q
     var_select_stats <- variable_selection_stats(
       lasso_stats$selected_betas,
       output_list$true_betas,
       p
     )
-    # True Positive Rate (how many predictors did it correctly classify as relevant)
-    statistics$lasso_tpr[i] <- var_select_stats$tp / (var_select_stats$tp + var_select_stats$fn)
-    # False Positive Rate (how many predictors did it incorrectly classify as relevant)
-    statistics$lasso_fpr[i] <- var_select_stats$fp / (var_select_stats$fp + var_select_stats$tn)
+    # True Positive Rate (how many predictors did it correctly classify)
+    total <- var_select_stats$tp + var_select_stats$fn
+    if (total != 0) {
+      statistics$lasso$tpr[i] <- var_select_stats$tp / total
+    }
+    # False Positive Rate (how many predictors did it incorrectly classify)
+    statistics$lasso$fpr[i] <- var_select_stats$fp / (var_select_stats$fp + var_select_stats$tn)
     # Precision (how correctly did it classify predictors as relevant)
-    statistics$lasso_precision[i] <- var_select_stats$tp / (var_select_stats$tp + var_select_stats$fp)
+    statistics$lasso$precision[i] <- var_select_stats$tp / (var_select_stats$tp + var_select_stats$fp)
+    # Accuracy (how correctly did it classify predictors in general)
+    trues <- var_select_stats$tp + var_select_stats$tn
+    statistics$lasso$accuracy[i] <- trues / (var_select_stats$tp + var_select_stats$fp + trues)
   }
   
-  statistics$ols_mse <- sum(statistics$ols_err)/100
-  statistics$lasso_mse <- sum(statistics$lasso_err)/100
+  statistics$ols$mean$sq_err <- sum(statistics$ols$err)/100 #sq err should always contain valid values
+
+  valid_vals <- statistics$ols$tpr[is.finite(statistics$ols$tpr)]
+  statistics$ols$mean$tpr <- sum(valid_vals)/length(valid_vals)
+  
+  valid_vals <- statistics$ols$fpr[is.finite(statistics$ols$fpr)]
+  statistics$ols$mean$fpr <- sum(valid_vals)/length(valid_vals)
+
+  valid_vals <- statistics$ols$precision[is.finite(statistics$ols$precision)]
+  statistics$ols$mean$precision <- sum(valid_vals)/length(valid_vals)
+  
+  valid_vals <- statistics$ols$accuracy[is.finite(statistics$ols$accuracy)]
+  statistics$ols$mean$accuracy <- sum(valid_vals)/length(valid_vals)
+  
+  statistics$lasso$mean$sq_err <- sum(statistics$lasso$err)/100 #sq err should always contain valid values
+  
+  valid_vals <- statistics$lasso$tpr[is.finite(statistics$lasso$tpr)]
+  statistics$lasso$mean$tpr <- sum(valid_vals)/length(valid_vals)
+  
+  valid_vals <- statistics$lasso$fpr[is.finite(statistics$lasso$fpr)]
+  statistics$lasso$mean$fpr <- sum(valid_vals)/length(valid_vals)
+  
+  valid_vals <- statistics$lasso$precision[is.finite(statistics$lasso$precision)]
+  statistics$lasso$mean$precision <- sum(valid_vals)/length(valid_vals)
+  
+  valid_vals <- statistics$lasso$accuracy[is.finite(statistics$lasso$accuracy)]
+  statistics$lasso$mean$accuracy <- sum(valid_vals)/length(valid_vals)
   
   return(statistics)
 }
@@ -242,18 +280,18 @@ for (i in 1:5) {
 
   #getting statistics
   statistics <- analysis_for(p)
-  ols_mse <- statistics$ols_mse
-  lasso_mse <- statistics$lasso_mse
-  
+  ols_mse <- statistics$ols$mean$sq_err
+  lasso_mse <- statistics$lasso$mean$sq_err
+
   #inputting into matrix
   summary_df$OLS[i] <- ols_mse
   summary_df$LASSO[i] <- lasso_mse
   
   print(paste0("Summary Statistics for p = ", p))
   writeLines("\nOLS Statistics\n")
-  print(summary(statistics$ols_q))
+  print(summary(statistics$ols$q))
   writeLines("\nLASSO Statistics\n")
-  print(summary(statistics$lasso_q))
+  print(summary(statistics$lasso$q))
   writeLines("\n")
 }
 
