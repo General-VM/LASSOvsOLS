@@ -16,8 +16,20 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 generate_data <- function(p, n){
-  beta0 <- rnorm(1)
+  b <- 0.5 # factor by which we deem coefficient irrelevant
+  beta0 <- 0 # setting beta0 to 0 for simplicity's sake
   beta <- matrix(rnorm(p), nrow = p, ncol = 1)
+  
+  relevant_coefs <- 1:(p+1)
+  relevant_coefs[1] <- FALSE
+  for (i in 1:p) {
+    if (abs(beta[i]) <= b) {
+      relevant_coefs[i+1] <- FALSE
+      beta[i, 1] <- 0
+    } else {
+      relevant_coefs[i+1] <- TRUE
+    }
+  }
   
   predictors <- matrix(
     rnorm(n*p), nrow = n, ncol = p,
@@ -27,15 +39,20 @@ generate_data <- function(p, n){
   errors <- rnorm(n)
   observations <- data.frame(Y = beta0 + predictors %*% beta + errors)
   
-  output <- as.data.frame(
-    cbind(observations, predictors)
+  output <- list(
+    true_betas = relevant_coefs,
+    df = as.data.frame(
+      cbind(observations, predictors)
+    )
   )
   
   return(output)
 }
 
-#generated_data <- generate_data(10, 100)
+#output_list <- generate_data(10, 100)
+#generated_data <- output_list$df
 #head(generated_data)
+#output_list$true_betas
 ```
 
 ## OLS
@@ -45,7 +62,8 @@ ols <- function(input_data){
   ols_model <- lm(Y ~ ., input_data)
   
   # extract only coefficients whose p value <= 0.5
-  significant_coefs <- data.frame(Coefficients = summary(ols_model)$coef[summary(ols_model)$coef[,4] <= .05, 4])
+  coef_probs <- summary(ols_model)$coef[,4]
+  significant_coefs <- data.frame(Coefficients = summary(ols_model)$coef[coef_probs <= .05, 4])
   
   # transpose vector so calculations work properly later
   ols_coefs <- t(significant_coefs)
@@ -54,17 +72,27 @@ ols <- function(input_data){
 
   # check if intercept is significant
   if (is.na(significant_coefs["(Intercept)",])) {
-   ols_beta_0 <- 0
- } else {
-   ols_beta_0 <- significant_coefs["(Intercept)",]
- }
+    ols_beta_0 <- 0
+  } else {
+    ols_beta_0 <- significant_coefs["(Intercept)",]
+  }
   
   sig_predictors_matrix <- as.matrix(input_data[, significant_predictors])
   errors <- input_data$Y - ols_beta_0 - sig_predictors_matrix %*% ols_coefs
 
+  l <- length(coef_probs)
+  relevant_betas <- 1:l
+  for (i in 1:l) {
+    if (coef_probs[i] <= 0.5) {
+      relevant_betas[i] <- TRUE
+    } else {
+      relevant_betas[i] <- FALSE
+    }
+  }
   # calculating squared error using euclidean norm
   output <- list(sq_error = (norm(errors, "e"))^2,
-                 q = length(significant_predictors))
+                 q = length(significant_predictors),
+                 selected_betas = relevant_betas)
   
   return(output)
 }
@@ -91,9 +119,20 @@ lasso <- function(input_data){
   #predict new coefficients using LASSO & optimal lambda
   prediction <- predict(cv.fit, newx = X, s="lambda.min")  
 
+  l <- length(lasso_coefs)
+  relevant_coefs <- 1:l
+  for (i in 1:l) {
+    if (lasso_coefs[i] == 0) {
+      relevant_coefs[i] <- FALSE
+    } else {
+      relevant_coefs[i] <- TRUE
+    }
+  }
+  
   # calculating squared error using euclidean norm
   output <- list(sq_error = (norm(Y-prediction, "e"))^2, 
-                 q = length(no_intercept))
+                 q = length(no_intercept),
+                 selected_betas = relevant_coefs)
 
   return(output)
 }
@@ -101,26 +140,81 @@ lasso <- function(input_data){
 #lasso(generated_data)
 ```
 
+## Statistics
+
+```{r}
+variable_selection_stats <- function(selected_predictors, true_predictors, p) {
+  true_positives <- 0
+  false_positives <- 0
+  false_negative <- 0
+  true_negative <- 0
+  for (i in 1:p) {
+    if (selected_predictors[i]){
+      if (true_predictors[i]) {
+        true_positives = true_positives + 1
+      } else {
+        false_positives = false_positives + 1
+      }
+    } else {
+      if (true_predictors[i]) {
+        false_negative = false_negative + 1
+      } else {
+        true_negative = true_negative + 1
+      }
+    }
+  }
+  
+  output <- list(
+    tp = true_positives,
+    fp = false_positives,
+    fn = false_negatives,
+    tn = true_negatives
+  )
+  
+  return(output)
+}
+```
+
 ## Repetition
 
 ```{r}
 analysis_for <- function(p) {
-  statistics <- list(
-    ols_err = 1:100,
-    lasso_err = 1:100,
-    ols_q = 1:100,
-    lasso_q = 1:100
-  )
+  statistics <- list()
   
   for (i in 1:100) {
-    generated_data <- generate_data(p, 100)
-    ols_stats <- ols(generated_data)
-    lasso_stats <- lasso(generated_data)
+    output_list <- generate_data(p, 100)
+    generated_data <- output_list$df
     
+    ols_stats <- ols(generated_data)
     statistics$ols_err[i] <- ols_stats$sq_error
-    statistics$lasso_err[i] <- lasso_stats$sq_error
     statistics$ols_q[i] <- ols_stats$q
+
+    var_select_stats <- variable_selection_stats(
+      ols_stats$selected_betas,
+      output_list$true_betas,
+      p
+    )
+    # True Positive Rate (how many predictors did it correctly classify as relevant)
+    statistics$ols_tpr[i] <- var_select_stats$tp / (var_select_stats$tp + var_select_stats$fn)
+    # False Positive Rate (how many predictors did it incorrectly classify as relevant)
+    statistics$ols_fpr[i] <- var_select_stats$fp / (var_select_stats$fp + var_select_stats$tn)
+    # Precision (how correctly did it classify predictors as relevant)
+    statistics$ols_precision[i] <- var_select_stats$tp / (var_select_stats$tp + var_select_stats$fp)
+  
+    lasso_stats <- lasso(generated_data)
+    statistics$lasso_err[i] <- lasso_stats$sq_error
     statistics$lasso_q[i] <- lasso_stats$q
+    var_select_stats <- variable_selection_stats(
+      lasso_stats$selected_betas,
+      output_list$true_betas,
+      p
+    )
+    # True Positive Rate (how many predictors did it correctly classify as relevant)
+    statistics$lasso_tpr[i] <- var_select_stats$tp / (var_select_stats$tp + var_select_stats$fn)
+    # False Positive Rate (how many predictors did it incorrectly classify as relevant)
+    statistics$lasso_fpr[i] <- var_select_stats$fp / (var_select_stats$fp + var_select_stats$tn)
+    # Precision (how correctly did it classify predictors as relevant)
+    statistics$lasso_precision[i] <- var_select_stats$tp / (var_select_stats$tp + var_select_stats$fp)
   }
   
   statistics$ols_mse <- sum(statistics$ols_err)/100
