@@ -103,8 +103,8 @@ LASSO can set coefficients to zero, there is the risk of over-shrinkage.
 ## 2.1 Generating Data
 
 The program, designed in R, used five values of
-$p = \{2, 5, 10, 15, 25\}$. Each iteration on p created a randomly
-generated, p-dimensional dataset based on the following linear model:
+$p = \{2, 5, 10, 15, 25\}$. Each iteration on $p$ created a randomly
+generated, $p$-dimensional dataset based on the following linear model:
 
 $$Y=\beta_0+X\beta+\epsilon$$ where
 
@@ -136,7 +136,7 @@ The following functions were written for this project:
 
 -   `lasso(input_data)` calculates the LASSO regression using
     `glmnet::cv.glmnet` then also extracts various derived terms (e.g.
-    number of significant predictors, squared error);
+    number of relevant predictors, squared error);
 
 -   `analysis_for(p)` performs 100 OLS and LASSO regressions using the
     number of predictors ($p$) then generates the summary statistics
@@ -147,7 +147,14 @@ values of $p$ above and generates summary statistics.
 
 # 3. Results
 
-# 4. Discussion
+# 4. Conclusion
+
+From the outputs, we can see that LASSO has a much smaller mean squared
+error compared to OLS every time. Specifically, we can see that LASSO
+actually decreases its mean squared error as $p$ increases, whereas
+OLS's mean squared error increases as $p$ increases. Further, we can see
+that LASSO typically has a higher number of relevant predictors ($q$)
+than OLS based on the summary statistics generated.
 
 # 5. Appendix
 
@@ -273,7 +280,7 @@ analysis_for <- function(p) {
 #analysis_for(10)
 ```
 
-### P values
+### p Values
 
 ```{r}
 p_values <- c(2, 5, 10, 25, 50)
@@ -296,14 +303,18 @@ for (i in 1:5) {
   summary_df$OLS[i] <- ols_mse
   summary_df$LASSO[i] <- lasso_mse
   
-  print(paste0("Summary Statistics for p = ", p))
+  print(paste0("Summary Statistics for q when p = ", p))
   writeLines("\nOLS Statistics\n")
   print(summary(statistics$ols_q))
   writeLines("\nLASSO Statistics\n")
   print(summary(statistics$lasso_q))
   writeLines("\n")
 }
+```
 
-writeLines("Summary matrix of LASSO and OLS MSE\n")
+### Summary Table
+
+```{r}
+writeLines("MSE for OLS and LASSO")
 kable(summary_df)
 ```
