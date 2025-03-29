@@ -381,7 +381,7 @@ boxplot(q_dispersions$lasso[10],
 )
 ```
 
-## Figure 4: Boxplots of q's for p = 25
+## Figure 5: Boxplots of q's for p = 25
 
 ```{r, echo=FALSE}
 par(mfrow=c(1,2))
