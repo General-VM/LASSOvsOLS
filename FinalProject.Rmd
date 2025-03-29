@@ -3,8 +3,9 @@ title: "Project Report: Project 1 LASSO vs OLS"
 subtitle: "MAT 4376"
 author: "Victor Matyiku, Rebecca Ly"
 date: "2025-03-30"
-output: pdf_document
-  toc: true
+output:
+  pdf_document:
+    toc: true
   theme: united
 editor_options: 
   markdown: 
@@ -36,9 +37,9 @@ For $p>n$, the LASSO method is more favourable. The LASSO method uses L1 regular
 
 One way of tuning the parameter lambda from a set of candidates is through *Cross-Validation (CV)*. The candidate that produces the LASSO estimator that minimizes the loss function is selected to be the most optimal lambda. A detailed procedure of the CV method is listed below:
 
-1.  Divide the data set *n* into *m* disjoint set $D_1, ..., D_m$ of size *n/m* each.
+1.  Divide the data set $n$ into $m$ disjoint set $D_1, ..., D_m$ of size $n/m$ each.
 
-2.  For each $\lambda\in\Lambda$, evaluate $\hat\beta^{-(h)}_{LASSO}(\lambda)$. the LASSO estimator based on the dataset $D\D_h$, $h=1, ..., m$. Each $D_h$ is treated as a *test dataset*, while $D\D_h$ as a *training dataset*.
+2.  For each $\lambda\in\Lambda$, evaluate $\hat\beta^{-(h)}_{LASSO}(\lambda)$. the LASSO estimator based on the dataset $D \setminus D_h$, $h=1, ..., m$. Each $D_h$ is treated as a *test dataset*, while $D \setminus D_h$ as a *training dataset*.
 
 3.  Thus, for each $\lambda\in\Lambda$ we get $h$ LASSO estimators, making in total $h \times q$ LASSO estimators.
 
@@ -82,7 +83,7 @@ $$Y=\beta_0+X\beta+\epsilon$$ where
 
 No other manipulation was performed on the dataset.
 
-A total of 3 functions were written for this project: `generate_data()`, `ols()`, and `lasso()`. `generate_data()` initially creates the normally distributed data set $X$ using the number of predictors ($p$) and number of observations (\$n\$).
+A total of 3 functions were written for this project: `generate_data()`, `ols()`, and `lasso()`. `generate_data()` initially creates the normally distributed data set $X$ using the number of predictors ($p$) and number of observations ($n$).
 
 ## 2.2 Design of OLS Function
 
