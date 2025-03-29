@@ -17,6 +17,123 @@ library(knitr)
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
+```{r, include=FALSE, echo=FALSE}
+# Generating data
+generate_data <- function(p, n){
+  beta0 <- rnorm(1)
+  beta <- matrix(rnorm(p), nrow = p, ncol = 1)
+  
+  predictors <- matrix(
+    rnorm(n*p), nrow = n, ncol = p,
+    dimnames = list(rows = 1:n, cols = paste("X", 1:p, sep=""))
+  )
+  
+  errors <- rnorm(n)
+  observations <- data.frame(Y = beta0 + predictors %*% beta + errors)
+  
+  output <- as.data.frame(
+    cbind(observations, predictors)
+  )
+  
+  return(output)
+}
+#generated_data <- generate_data(10, 100)
+#head(generated_data)
+
+```
+
+```{r, include=FALSE, echo=FALSE}
+# OLS
+ols <- function(input_data){
+  ols_model <- lm(Y ~ ., input_data)
+  
+  # extract only coefficients whose p value <= 0.5
+  significant_coefs <- data.frame(Coefficients = summary(ols_model)$coef[summary(ols_model)$coef[,4] <= .05, 4])
+  
+  # transpose vector so calculations work properly later
+  ols_coefs <- t(significant_coefs)
+  significant_predictors <- colnames(ols_coefs)[colnames(ols_coefs) != "(Intercept)"]
+  ols_coefs <- ols_coefs[, significant_predictors]
+
+  # check if intercept is significant
+  if (is.na(significant_coefs["(Intercept)",])) {
+    ols_beta_0 <- 0
+  } else {
+    ols_beta_0 <- significant_coefs["(Intercept)",]
+  }
+  
+  sig_predictors_matrix <- as.matrix(input_data[, significant_predictors])
+  errors <- input_data$Y - ols_beta_0 - sig_predictors_matrix %*% ols_coefs
+
+  # calculating squared error using euclidean norm
+  output <- list(sq_error = (norm(errors, "e"))^2,
+                 q = length(significant_predictors))
+  
+  return(output)
+}
+#ols(generated_data)
+
+```
+
+```{r, include=FALSE, echo=FALSE}
+# LASSO
+library(glmnet)
+lasso <- function(input_data){
+  X <- as.matrix(input_data[colnames(input_data) != "Y"])
+  Y <- as.matrix(input_data$Y)
+  
+  # LASSO with CV
+  cv.fit <- cv.glmnet(X, Y, nfolds=10, family="gaussian") 
+
+  # coefficients for LASSO model using optimal lambda
+  lasso_coefs <- coef(cv.fit, s="lambda.min")
+  
+  no_intercept <- lasso_coefs@i[lasso_coefs@i != 0]
+
+  #predict new coefficients using LASSO & optimal lambda
+  prediction <- predict(cv.fit, newx = X, s="lambda.min")  
+
+  # calculating squared error using euclidean norm
+  output <- list(sq_error = (norm(Y-prediction, "e"))^2, 
+                 q = length(no_intercept))
+
+  return(output)
+}
+#lasso(generated_data)
+
+```
+
+```{r, include=FALSE, echo=FALSE}
+# Repetition
+analysis_for <- function(p) {
+  statistics <- list(
+    ols_err = 1:100,
+    lasso_err = 1:100,
+    ols_q = 1:100,
+    lasso_q = 1:100
+  )
+  
+  for (i in 1:100) {
+    generated_data <- generate_data(p, 100)
+    ols_stats <- ols(generated_data)
+    lasso_stats <- lasso(generated_data)
+    
+    statistics$ols_err[i] <- ols_stats$sq_error
+    statistics$lasso_err[i] <- lasso_stats$sq_error
+    statistics$ols_q[i] <- ols_stats$q
+    statistics$lasso_q[i] <- lasso_stats$q
+  }
+  
+  statistics$ols_mse <- sum(statistics$ols_err)/100
+  statistics$lasso_mse <- sum(statistics$lasso_err)/100
+  
+  return(statistics)
+}
+
+#analysis_for(10)
+```
+
 # 1.Introduction
 
 ## 1.1 Background of OLS and LASSO Method
@@ -147,142 +264,8 @@ values of $p$ above and generates summary statistics.
 
 # 3. Results
 
-# 4. Conclusion
-
-From the outputs, we can see that LASSO has a much smaller mean squared
-error compared to OLS every time. Specifically, we can see that LASSO
-actually decreases its mean squared error as $p$ increases, whereas
-OLS's mean squared error increases as $p$ increases. Further, we can see
-that LASSO typically has a higher number of relevant predictors ($q$)
-than OLS based on the summary statistics generated.
-
-# 5. Appendix
-
-## Code
-
-### Generating Data
-
-```{r}
-generate_data <- function(p, n){
-  beta0 <- rnorm(1)
-  beta <- matrix(rnorm(p), nrow = p, ncol = 1)
-  
-  predictors <- matrix(
-    rnorm(n*p), nrow = n, ncol = p,
-    dimnames = list(rows = 1:n, cols = paste("X", 1:p, sep=""))
-  )
-  
-  errors <- rnorm(n)
-  observations <- data.frame(Y = beta0 + predictors %*% beta + errors)
-  
-  output <- as.data.frame(
-    cbind(observations, predictors)
-  )
-  
-  return(output)
-}
-
-#generated_data <- generate_data(10, 100)
-#head(generated_data)
-```
-
-### OLS
-
-```{r}
-ols <- function(input_data){
-  ols_model <- lm(Y ~ ., input_data)
-  
-  # extract only coefficients whose p value <= 0.5
-  significant_coefs <- data.frame(Coefficients = summary(ols_model)$coef[summary(ols_model)$coef[,4] <= .05, 4])
-  
-  # transpose vector so calculations work properly later
-  ols_coefs <- t(significant_coefs)
-  significant_predictors <- colnames(ols_coefs)[colnames(ols_coefs) != "(Intercept)"]
-  ols_coefs <- ols_coefs[, significant_predictors]
-
-  # check if intercept is significant
-  if (is.na(significant_coefs["(Intercept)",])) {
-    ols_beta_0 <- 0
-  } else {
-    ols_beta_0 <- significant_coefs["(Intercept)",]
-  }
-  
-  sig_predictors_matrix <- as.matrix(input_data[, significant_predictors])
-  errors <- input_data$Y - ols_beta_0 - sig_predictors_matrix %*% ols_coefs
-
-  # calculating squared error using euclidean norm
-  output <- list(sq_error = (norm(errors, "e"))^2,
-                 q = length(significant_predictors))
-  
-  return(output)
-}
-
-#ols(generated_data)
-```
-
-### LASSO
-
-```{r}
-library(glmnet)
-lasso <- function(input_data){
-  X <- as.matrix(input_data[colnames(input_data) != "Y"])
-  Y <- as.matrix(input_data$Y)
-  
-  # LASSO with CV
-  cv.fit <- cv.glmnet(X, Y, nfolds=10, family="gaussian") 
-
-  # coefficients for LASSO model using optimal lambda
-  lasso_coefs <- coef(cv.fit, s="lambda.min")
-  
-  no_intercept <- lasso_coefs@i[lasso_coefs@i != 0]
-
-  #predict new coefficients using LASSO & optimal lambda
-  prediction <- predict(cv.fit, newx = X, s="lambda.min")  
-
-  # calculating squared error using euclidean norm
-  output <- list(sq_error = (norm(Y-prediction, "e"))^2, 
-                 q = length(no_intercept))
-
-  return(output)
-}
-
-#lasso(generated_data)
-```
-
-### Repetition
-
-```{r}
-analysis_for <- function(p) {
-  statistics <- list(
-    ols_err = 1:100,
-    lasso_err = 1:100,
-    ols_q = 1:100,
-    lasso_q = 1:100
-  )
-  
-  for (i in 1:100) {
-    generated_data <- generate_data(p, 100)
-    ols_stats <- ols(generated_data)
-    lasso_stats <- lasso(generated_data)
-    
-    statistics$ols_err[i] <- ols_stats$sq_error
-    statistics$lasso_err[i] <- lasso_stats$sq_error
-    statistics$ols_q[i] <- ols_stats$q
-    statistics$lasso_q[i] <- lasso_stats$q
-  }
-  
-  statistics$ols_mse <- sum(statistics$ols_err)/100
-  statistics$lasso_mse <- sum(statistics$lasso_err)/100
-  
-  return(statistics)
-}
-
-#analysis_for(10)
-```
-
-### p Values
-
-```{r}
+```{r, echo=FALSE}
+# p Values
 p_values <- c(2, 5, 10, 25, 50)
 
 summary_df <- data.frame(
@@ -310,11 +293,26 @@ for (i in 1:5) {
   print(summary(statistics$lasso_q))
   writeLines("\n")
 }
+
 ```
 
-### Summary Table
-
-```{r}
-writeLines("MSE for OLS and LASSO")
+```{r, echo=FALSE, fig.cap="MSE for OLS and LASSO"}
 kable(summary_df)
+
+```
+
+# 4. Conclusion
+
+From the outputs, we can see that LASSO has a much smaller mean squared
+error compared to OLS every time. Specifically, we can see that LASSO
+actually decreases its mean squared error as $p$ increases, whereas
+OLS's mean squared error increases as $p$ increases. Further, we can see
+that LASSO typically has a higher number of relevant predictors ($q$)
+than OLS based on the summary statistics generated.
+
+# 5. Appendix
+
+## Code
+
+```{r ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
 ```
