@@ -296,10 +296,10 @@ for (i in 1:5) {
 
 ```
 
-```{r, echo=FALSE, fig.cap="MSE for OLS and LASSO"}
-kable(summary_df)
-
+```{r, echo=FALSE}
+kable(summary_df, caption = "MSE for OLS and LASSO")
 ```
+
 
 # 4. Conclusion
 
