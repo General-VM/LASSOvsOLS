@@ -17,7 +17,6 @@ library(knitr)
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
 ```{r, include=FALSE, echo=FALSE}
 # Generating data
 generate_data <- function(p, n){
@@ -132,6 +131,36 @@ analysis_for <- function(p) {
 }
 
 #analysis_for(10)
+```
+
+```{r, echo=FALSE}
+# p Values
+p_values <- c(2, 5, 10, 25, 50)
+
+summary_df <- data.frame(
+  p = p_values,
+  OLS = p_values,
+  LASSO = p_values #just to be consistent in size
+)
+
+q_dispersions <- list(ols = list(), lasso = list())
+
+for (i in 1:5) {
+  p <- p_values[i]
+
+  #getting statistics
+  statistics <- analysis_for(p)
+  ols_mse <- statistics$ols_mse
+  lasso_mse <- statistics$lasso_mse
+  
+  #inputting into matrix
+  summary_df$OLS[i] <- ols_mse
+  summary_df$LASSO[i] <- lasso_mse
+  
+  q_dispersions$ols[p] <- list(statistics$ols_q)
+  q_dispersions$lasso[p] <- list(statistics$lasso_q)
+}
+
 ```
 
 # 1.Introduction
@@ -264,53 +293,109 @@ values of $p$ above and generates summary statistics.
 
 # 3. Results
 
-```{r, echo=FALSE}
-# p Values
-p_values <- c(2, 5, 10, 25, 50)
+## Figure 1: Boxplot of q's for p = 50
 
-summary_df <- data.frame(
-  p = p_values,
-  OLS = p_values,
-  LASSO = p_values #just to be consistent in size
+```{r, echo=FALSE}
+par(mfrow=c(1,2))
+
+boxplot(q_dispersions$ols[50],
+  main = "OLS",
+  col = "orange",
+  notch = TRUE
 )
 
-for (i in 1:5) {
-  p <- p_values[i]
-
-  #getting statistics
-  statistics <- analysis_for(p)
-  ols_mse <- statistics$ols_mse
-  lasso_mse <- statistics$lasso_mse
-  
-  #inputting into matrix
-  summary_df$OLS[i] <- ols_mse
-  summary_df$LASSO[i] <- lasso_mse
-  
-  print(paste0("Summary Statistics for q when p = ", p))
-  writeLines("\nOLS Statistics\n")
-  print(summary(statistics$ols_q))
-  writeLines("\nLASSO Statistics\n")
-  print(summary(statistics$lasso_q))
-  writeLines("\n")
-}
-
+boxplot(q_dispersions$lasso[50],
+  main = "LASSO",
+  col = "red",
+  notch = TRUE
+)
 ```
+
+From this figure and the rest (see Appendix for other $p$ values), we
+can see that LASSO consistently has an at least equal number of relevant
+predictors ($q$) as OLS, though LASSO often has a much higher number.
+Interestingly, while OLS tends to distribute its $q$'s near the median
+as the $p$ increases, LASSO's $q$'s are distributed near the maximum.
+
+## Table 1: MSE for OLS and LASSO
 
 ```{r, echo=FALSE}
-kable(summary_df, caption = "MSE for OLS and LASSO")
+kable(summary_df)
 ```
 
+From the table, we can see that LASSO has a much smaller mean squared
+error compared to OLS every time. Specifically, we can see that LASSO
+actually decreases its mean squared error as $p$ increases, whereas
+OLS's mean squared error increases as $p$ increases.
 
 # 4. Conclusion
 
-From the outputs, we can see that LASSO has a much smaller mean squared
-error compared to OLS every time. Specifically, we can see that LASSO
-actually decreases its mean squared error as $p$ increases, whereas
-OLS's mean squared error increases as $p$ increases. Further, we can see
-that LASSO typically has a higher number of relevant predictors ($q$)
-than OLS based on the summary statistics generated.
-
 # 5. Appendix
+
+## Figure 2: Boxplots of q's for p = 2
+
+```{r, echo=FALSE}
+par(mfrow=c(1,2))
+
+boxplot(q_dispersions$ols[2],
+  main = "OLS",
+  col = "orange"
+)
+
+boxplot(q_dispersions$lasso[2],
+  main = "LASSO",
+  col = "red"
+)
+```
+
+## Figure 3: Boxplots of q's for p = 5
+
+```{r, echo=FALSE}
+par(mfrow=c(1,2))
+
+boxplot(q_dispersions$ols[5],
+  main = "OLS",
+  col = "orange"
+)
+
+boxplot(q_dispersions$lasso[5],
+  main = "LASSO",
+  col = "red"
+)
+```
+
+## Figure 4: Boxplots of q's for p = 10
+
+```{r, echo=FALSE}
+par(mfrow=c(1,2))
+
+boxplot(q_dispersions$ols[10],
+  main = "OLS",
+  col = "orange"
+)
+
+boxplot(q_dispersions$lasso[10],
+  main = "LASSO",
+  col = "red"
+)
+```
+
+## Figure 4: Boxplots of q's for p = 25
+
+```{r, echo=FALSE}
+par(mfrow=c(1,2))
+
+boxplot(q_dispersions$ols[25],
+  main = "OLS",
+  col = "orange",
+  notch = TRUE
+)
+
+boxplot(q_dispersions$lasso[25],
+  main = "LASSO",
+  col = "red"
+)
+```
 
 ## Code
 
